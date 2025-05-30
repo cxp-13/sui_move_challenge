@@ -5,12 +5,12 @@ Decentralized fruit marketplace with 2-tier referral rewards using USDC.
 ## Overview
 
 - Buy bananas (1,000 USDC) and apples (0.15 USDC)
-- 2-level referral rewards: Inviter gets 10%, Grandparent gets 1%
+- 2-level referral rewards: Inviter gets 10% points, Grandparent gets 1% points
 - **🔒 Referral module ONLY accessible through marketplace**
 
 ## Reward Example
 
-User A buys banana (1,000 USDC) → User B (inviter) gets 100 USDC → User C (grandparent) gets 10 USDC
+User A buys banana (1,000 USDC) → User B (inviter) gets 100 USDC points → User C (grandparent) gets 10 USDC points
 
 ## Key Features
 
@@ -18,7 +18,8 @@ User A buys banana (1,000 USDC) → User B (inviter) gets 100 USDC → User C (g
 - Only 2 items: bananas & apples
 - Max 2 reward levels
 - No refunds
-- USDC payments (9 decimals)
+- USDC payments stored in marketplace registry
+- Rewards recorded as points (not instant transfers)
 
 ## Architecture
 
@@ -44,7 +45,8 @@ MarketplaceRegistry<COIN> {
 Users can purchase items through the marketplace, which automatically:
 
 - Records the transaction
-- Distributes referral rewards
+- Stores USDC payment in marketplace registry
+- Records referral rewards as points in points table
 - Emits purchase events
 
 ### Referral System
@@ -60,14 +62,16 @@ Users can purchase items through the marketplace, which automatically:
 
 When a user makes a purchase:
 
-1. **Direct Inviter** receives 10% of the purchase amount
-2. **Grandparent** (inviter's inviter) receives 10% of the direct inviter's reward (1% of original purchase)
+1. **Direct Inviter** receives 10% of purchase amount as points
+2. **Grandparent** (inviter's inviter) receives 10% of inviter's reward as points (1% of original purchase)
+3. **USDC payments are stored in marketplace registry, not transferred instantly**
 
 **Example:**
 
-- User A (invited by User B, who was invited by User C) buys a banana for $1000
-- User B receives: $1000 × 10% = $100
-- User C receives: $100 × 10% = $10
+- User A (invited by User B, who was invited by User C) buys a banana for 1,000 USDC
+- USDC is stored in marketplace registry
+- User B receives: 100 USDC worth of points
+- User C receives: 10 USDC worth of points
 
 ## Tests
 
