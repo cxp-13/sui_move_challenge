@@ -34,11 +34,12 @@ public fun create_referral_book(ctx: &mut TxContext): ReferralBook {
 }
 
 #[test_only]
-public fun init_for_test(ctx: &mut TxContext): ReferralBook {
-    ReferralBook {
+public fun init_for_test(ctx: &mut TxContext, admin: address) {
+    let referral_book = ReferralBook {
         id: object::new(ctx),
         referrals: table::new(ctx),
-    }
+    };
+    transfer::transfer(referral_book, admin);
 }
 
 public fun record_referral(referral_book: &mut ReferralBook, inviter: address, invitee: address) {
