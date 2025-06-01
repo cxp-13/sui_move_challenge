@@ -9,26 +9,29 @@ use referral::marketplace::{
     has_purchased,
     MarketplaceRegistry,
     item_lenght,
-    E_INSUFFICIENT_PAYMENT
+    E_INSUFFICIENT_PAYMENT,
+    get_user_points
 };
 use referral::referral;
 use referral::usdc::USDC;
 use std::string::{Self, String};
 use sui::coin;
+use sui::table;
 use sui::test_scenario;
 use sui::test_utils::{print, destroy};
 
 #[test]
 fun test_purchase_banana_success() {
     let admin = @0xC;
+    let grand_inviter = @0xD;
     let inviter = @0xA;
     let invitee = @0xB;
 
     let mut scenario_val = test_scenario::begin(admin);
     let scenario = &mut scenario_val;
 
-    let banana_price = 1_000_000_000_000;
-    let initial_usdc_amount: u64 = 2_000_000_000_000;
+    let banana_price = 1_000_000_000_000; // 1000 USDC
+    let initial_usdc_amount: u64 = 2_000_000_000_000; // 2000 USDC
     let banana_id: ID;
 
     test_scenario::next_tx(scenario, admin);
@@ -42,6 +45,8 @@ fun test_purchase_banana_success() {
             scenario,
             admin,
         );
+
+        referral::record_referral(&mut referral_book, grand_inviter, inviter);
         referral::record_referral(&mut referral_book, inviter, invitee);
 
         let banana = initial_banana(test_scenario::ctx(scenario));
@@ -76,8 +81,15 @@ fun test_purchase_banana_success() {
         let payment = coin::split(&mut initial_fund, banana_price, test_scenario::ctx(scenario));
 
         purchase<USDC, Banana>(&mut registry, banana_id, payment, test_scenario::ctx(scenario));
-
         assert!(has_purchased(&registry, invitee), 0);
+
+        let inviter_points = get_user_points(&registry, inviter);
+
+        let grand_points = get_user_points(&registry, grand_inviter);
+
+        assert!(inviter_points == 100_000_000_000, 101);
+        assert!(grand_points == 10_000_000_000, 102);
+
         destroy(registry);
         destroy(initial_fund);
     };

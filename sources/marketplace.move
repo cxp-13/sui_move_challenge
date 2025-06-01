@@ -117,6 +117,18 @@ public fun item_lenght<COIN>(registry: &MarketplaceRegistry<COIN>): u8 {
     registry.items.length() as u8
 }
 
+public fun get_user_points<COIN>(
+    registry: &MarketplaceRegistry<COIN>,
+    user: address
+): u64 {
+    if (table::contains(&registry.points, user)) {
+        *table::borrow(&registry.points, user)
+    } else {
+        0
+    }
+}
+
+
 #[allow(lint(self_transfer))]
 public fun purchase<COIN, T>(
     registry: &mut MarketplaceRegistry<COIN>,
@@ -146,7 +158,7 @@ public fun purchase<COIN, T>(
         table::add(&mut registry.payments, tx_context::sender(ctx), payment);
     };
 
-    // distribute_referral_rewards(registry, price, tx_context::sender(ctx));
+    distribute_referral_rewards(registry, price, tx_context::sender(ctx));
 
     if (type_name::get<T>() == type_name::get<Banana>()) {
         let banana = bag::remove<_, Banana>(&mut registry.items, item_id);
@@ -165,8 +177,27 @@ public fun purchase<COIN, T>(
     });
 }
 
-// fun distribute_referral_rewards<COIN>(
-//     registry: &mut MarketplaceRegistry<COIN>,
-//     purchase_amount: u64,
-//     buyer: address,
-// ) {}
+fun distribute_referral_rewards<COIN>(
+    registry: &mut MarketplaceRegistry<COIN>,
+    purchase_amount: u64,
+    buyer: address,
+) {
+    let inviter = referral::get_inviter(&registry.referral_book, buyer);
+
+    let inviter_reward = purchase_amount * registry.reward_numerator / registry.reward_denominator;
+    add_points(&mut registry.points, inviter, inviter_reward);
+
+    let grand = referral::get_inviter(&registry.referral_book, *inviter);
+
+    let grand_reward = inviter_reward * registry.reward_numerator / registry.reward_denominator;
+    add_points(&mut registry.points, grand, grand_reward);
+}
+
+fun add_points(points: &mut Table<address, u64>, user: &address, amount: u64) {
+    if (table::contains(points, *user)) {
+        let existing = table::borrow_mut(points, *user);
+        *existing = *existing + amount;
+    } else {
+        table::add(points, *user, amount);
+    };
+}
