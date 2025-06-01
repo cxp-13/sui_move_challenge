@@ -1,7 +1,7 @@
 #[test_only]
 module referral::referral_tests;
 
-use referral::referral::{Self, ReferralBook, init_for_test};
+use referral::referral::{Self, ReferralBook, init_for_test, E_SELF_REFERRAL, E_ALREADY_INVITED};
 use std::string;
 use sui::test_scenario;
 use sui::transfer;
@@ -37,7 +37,7 @@ fun test_successful_invitation() {
 }
 
 #[test]
-#[expected_failure(abort_code = 2)]
+#[expected_failure(abort_code = E_ALREADY_INVITED)]
 fun test_double_invitation_fails() {
     // Test addresses
     let admin = @0xBABE;
@@ -71,7 +71,7 @@ fun test_double_invitation_fails() {
 }
 
 #[test]
-#[expected_failure(abort_code = 1)]
+#[expected_failure(abort_code = E_SELF_REFERRAL)]
 fun test_self_invitation_fails() {
 
     let admin = @0xBABE;

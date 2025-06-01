@@ -154,7 +154,7 @@ fun test_purchase_with_insufficient_balance_should_fail() {
     let scenario = &mut scenario_val;
 
     let banana_price = 1_000_000_000_000;
-    let insufficient_usdc_amount: u64 = 500_000_000_000;
+    let initial_usdc_amount: u64 = 2_000_000_000_000;
     let banana_id: ID;
 
     test_scenario::next_tx(scenario, admin);
@@ -184,8 +184,8 @@ fun test_purchase_with_insufficient_balance_should_fail() {
 
     test_scenario::next_tx(scenario, invitee);
     {
-        let mut insufficient_fund = coin::mint_for_testing<USDC>(
-            insufficient_usdc_amount,
+        let mut initial_fund = coin::mint_for_testing<USDC>(
+            initial_usdc_amount,
             test_scenario::ctx(scenario),
         );
 
@@ -195,13 +195,13 @@ fun test_purchase_with_insufficient_balance_should_fail() {
         );
 
         let payment = coin::split(
-            &mut insufficient_fund,
-            banana_price,
+            &mut initial_fund,
+            banana_price - 100,
             test_scenario::ctx(scenario),
         );
 
         purchase<USDC, Banana>(&mut registry, banana_id, payment, test_scenario::ctx(scenario));
-        destroy(insufficient_fund);
+        destroy(initial_fund);
         destroy(registry);
     };
 
