@@ -14,9 +14,9 @@ use referral::marketplace::{
 };
 use referral::referral;
 use referral::usdc::USDC;
+use std::debug;
 use std::string::{Self, String};
 use sui::coin;
-use sui::table;
 use sui::test_scenario;
 use sui::test_utils::{print, destroy};
 
@@ -52,9 +52,6 @@ fun test_purchase_banana_success() {
         let banana = initial_banana(test_scenario::ctx(scenario));
         banana_id = object::id(&banana);
 
-        let hello: String = string::utf8(b"banana is created");
-        print(*hello.as_bytes());
-
         create_marketplace_registry_for_test<USDC>(
             test_scenario::ctx(scenario),
             referral_book,
@@ -75,8 +72,8 @@ fun test_purchase_banana_success() {
             admin,
         );
 
-        let v = vector[item_lenght(&registry)];
-        print(v);
+        print(*string::utf8(b"registry items lenght:").as_bytes());
+        debug::print(&item_lenght(&registry));
 
         let payment = coin::split(&mut initial_fund, banana_price, test_scenario::ctx(scenario));
 
@@ -85,7 +82,13 @@ fun test_purchase_banana_success() {
 
         let inviter_points = get_user_points(&registry, inviter);
 
+        print(*string::utf8(b"inviter_points:").as_bytes());
+        debug::print(&inviter_points);
+
         let grand_points = get_user_points(&registry, grand_inviter);
+
+        print(*string::utf8(b"grand_points:").as_bytes());
+        debug::print(&grand_points);
 
         assert!(inviter_points == 100_000_000_000, 101);
         assert!(grand_points == 10_000_000_000, 102);
