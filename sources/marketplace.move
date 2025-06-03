@@ -108,6 +108,36 @@ public fun create_marketplace_registry_for_test<COIN>(
 }
 
 #[test_only]
+public fun create_marketplace_registry_with_multiple_bananas_for_test<COIN>(
+    ctx: &mut TxContext,
+    referral_book: ReferralBook,
+    bananas: &mut vector<Banana>,
+    admin: address,
+) {
+    let mut registry = MarketplaceRegistry<COIN> {
+        id: object::new(ctx),
+        items: bag::new(ctx),
+        points: table::new(ctx),
+        referral_book,
+        reward_numerator: 1000, // 10%
+        reward_denominator: 10000,
+        payments: table::new(ctx),
+    };
+
+    let len = vector::length(bananas);
+    let mut i = 0;
+    while (i < len) {
+        let banana = vector::remove(bananas, 0); // 总是取第一个并移除
+        bag::add(&mut registry.items, object::id(&banana), banana);
+        i = i + 1;
+    };
+
+    transfer::public_transfer(registry, admin);
+}
+
+
+
+#[test_only]
 public fun has_purchased<COIN>(registry: &MarketplaceRegistry<COIN>, user: address): bool {
     table::contains(&registry.payments, user)
 }
