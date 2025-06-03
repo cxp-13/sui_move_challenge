@@ -135,8 +135,6 @@ public fun create_marketplace_registry_with_multiple_bananas_for_test<COIN>(
     transfer::public_transfer(registry, admin);
 }
 
-
-
 #[test_only]
 public fun has_purchased<COIN>(registry: &MarketplaceRegistry<COIN>, user: address): bool {
     table::contains(&registry.payments, user)
@@ -147,17 +145,13 @@ public fun item_lenght<COIN>(registry: &MarketplaceRegistry<COIN>): u8 {
     registry.items.length() as u8
 }
 
-public fun get_user_points<COIN>(
-    registry: &MarketplaceRegistry<COIN>,
-    user: address
-): u64 {
+public fun get_user_points<COIN>(registry: &MarketplaceRegistry<COIN>, user: address): u64 {
     if (table::contains(&registry.points, user)) {
         *table::borrow(&registry.points, user)
     } else {
         0
     }
 }
-
 
 #[allow(lint(self_transfer))]
 public fun purchase<COIN, T>(
@@ -190,15 +184,15 @@ public fun purchase<COIN, T>(
 
     distribute_referral_rewards(registry, price, tx_context::sender(ctx));
 
-    if (type_name::get<T>() == type_name::get<Banana>()) {
-        let banana = bag::remove<_, Banana>(&mut registry.items, item_id);
+    // if (type_name::get<T>() == type_name::get<Banana>()) {
+    //     let banana = bag::remove<_, Banana>(&mut registry.items, item_id);
 
-        transfer::public_transfer(banana, tx_context::sender(ctx));
-    } else if (type_name::get<T>() == type_name::get<Apple>()) {
-        let apple = bag::remove<_, Apple>(&mut registry.items, item_id);
+    //     transfer::public_transfer(banana, tx_context::sender(ctx));
+    // } else if (type_name::get<T>() == type_name::get<Apple>()) {
+    //     let apple = bag::remove<_, Apple>(&mut registry.items, item_id);
 
-        transfer::public_transfer(apple, tx_context::sender(ctx));
-    };
+    //     transfer::public_transfer(apple, tx_context::sender(ctx));
+    // };
     event::emit(PurchaseEvent {
         buyer: tx_context::sender(ctx),
         amount: price,
