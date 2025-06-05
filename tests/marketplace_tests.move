@@ -78,7 +78,7 @@ fun test_purchase_banana_success() {
 
         let payment = coin::split(&mut initial_fund, banana_price, test_scenario::ctx(scenario));
 
-        purchase<USDC, Banana>(&mut registry, banana_id, payment, test_scenario::ctx(scenario));
+        purchase<USDC, Banana>(&mut registry, banana_id, 1, payment, test_scenario::ctx(scenario));
         assert!(has_purchased(&registry, invitee), 0);
 
         let inviter_points = get_user_points(&registry, inviter);
@@ -151,7 +151,7 @@ fun test_purchase_without_invitation_should_fail() {
 
         let payment = coin::split(&mut initial_fund, banana_price, test_scenario::ctx(scenario));
 
-        purchase<USDC, Banana>(&mut registry, banana_id, payment, test_scenario::ctx(scenario));
+        purchase<USDC, Banana>(&mut registry, banana_id, 1, payment, test_scenario::ctx(scenario));
         destroy(initial_fund);
         destroy(registry);
     };
@@ -216,7 +216,7 @@ fun test_purchase_with_insufficient_balance_should_fail() {
             test_scenario::ctx(scenario),
         );
 
-        purchase<USDC, Banana>(&mut registry, banana_id, payment, test_scenario::ctx(scenario));
+        purchase<USDC, Banana>(&mut registry, banana_id, 1, payment, test_scenario::ctx(scenario));
         destroy(initial_fund);
         destroy(registry);
     };
@@ -234,11 +234,10 @@ fun test_bulk_purchase_bananas() {
     let mut scenario_val = test_scenario::begin(admin);
     let scenario = &mut scenario_val;
 
-    let banana_price = 1_000_000_000_000; 
+    let banana_price = 1_000_000_000_000;
 
     // cause TIMEOUT
-    // let quantity = 100_000;
-    let quantity = 100;
+    let quantity = 10_000;
 
     let total_cost = banana_price * quantity;
     let initial_usdc_amount = total_cost + 1_000_000_000;
@@ -265,14 +264,19 @@ fun test_bulk_purchase_bananas() {
         let mut bananas = vector::empty<Banana>();
         let mut item_ids = vector::empty<ID>();
 
-        let mut i = 0;
-        while (i < quantity) {
-            let banana = initial_banana(test_scenario::ctx(scenario));
+        // let mut i = 0;
+        // while (i < quantity) {
+        //     let banana = initial_banana(test_scenario::ctx(scenario));
 
-            vector::push_back(&mut item_ids, object::id(&banana));
-            vector::push_back(&mut bananas, banana);
-            i = i + 1;
-        };
+        //     vector::push_back(&mut item_ids, object::id(&banana));
+        //     vector::push_back(&mut bananas, banana);
+        //     i = i + 1;
+        // };
+
+        let banana = initial_banana(test_scenario::ctx(scenario));
+
+        vector::push_back(&mut item_ids, object::id(&banana));
+        vector::push_back(&mut bananas, banana);
 
         create_marketplace_registry_with_multiple_bananas_for_test<USDC>(
             test_scenario::ctx(scenario),
@@ -295,24 +299,27 @@ fun test_bulk_purchase_bananas() {
             admin,
         );
 
-        let mut i = 0;
-        while (i < quantity) {
-            let item_id = vector::remove(&mut banana_id_list, 0);
-            let payment = coin::split(&mut fund, banana_price, test_scenario::ctx(scenario));
-            purchase<USDC, Banana>(&mut registry, item_id, payment, test_scenario::ctx(scenario));
-            i = i + 1;
-        };
+        let item_id = vector::remove(&mut banana_id_list, 0);
+        let payment = coin::split(&mut fund, total_cost, test_scenario::ctx(scenario));
+        purchase<USDC, Banana>(
+            &mut registry,
+            item_id,
+            quantity,
+            payment,
+            test_scenario::ctx(scenario),
+        );
 
         assert!(has_purchased(&registry, invitee), 0);
 
         let inviter_points = get_user_points(&registry, inviter);
         let grand_points = get_user_points(&registry, grand_inviter);
 
+        print(*string::utf8(b"bulk purchase inviter points:").as_bytes());
         debug::print(&inviter_points);
+        print(*string::utf8(b"bulk purchase grand inviter points:").as_bytes());
         debug::print(&grand_points);
-
-        assert!(inviter_points == 10_000_000_000_000, 101);
-        assert!(grand_points == 1_000_000_000_000, 102);
+        assert!(inviter_points == 1_000_000_000_000_000, 101);
+        assert!(grand_points == 100_000_000_000_000, 102);
 
         destroy(registry);
         destroy(fund);

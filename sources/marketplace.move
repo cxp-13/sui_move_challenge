@@ -157,6 +157,7 @@ public fun get_user_points<COIN>(registry: &MarketplaceRegistry<COIN>, user: add
 public fun purchase<COIN, T>(
     registry: &mut MarketplaceRegistry<COIN>,
     item_id: ID,
+    quantity: u64,
     payment: Coin<COIN>,
     ctx: &mut TxContext,
 ) {
@@ -173,7 +174,9 @@ public fun purchase<COIN, T>(
         0
     };
 
-    assert!(coin::value(&payment) >= price, E_INSUFFICIENT_PAYMENT);
+    let total_price = price * quantity;
+
+    assert!(coin::value(&payment) >= total_price, E_INSUFFICIENT_PAYMENT);
 
     if (table::contains(&registry.payments, tx_context::sender(ctx))) {
         let existing_payment = table::borrow_mut(&mut registry.payments, tx_context::sender(ctx));
@@ -182,20 +185,11 @@ public fun purchase<COIN, T>(
         table::add(&mut registry.payments, tx_context::sender(ctx), payment);
     };
 
-    distribute_referral_rewards(registry, price, tx_context::sender(ctx));
+    distribute_referral_rewards(registry, total_price, tx_context::sender(ctx));
 
-    // if (type_name::get<T>() == type_name::get<Banana>()) {
-    //     let banana = bag::remove<_, Banana>(&mut registry.items, item_id);
-
-    //     transfer::public_transfer(banana, tx_context::sender(ctx));
-    // } else if (type_name::get<T>() == type_name::get<Apple>()) {
-    //     let apple = bag::remove<_, Apple>(&mut registry.items, item_id);
-
-    //     transfer::public_transfer(apple, tx_context::sender(ctx));
-    // };
     event::emit(PurchaseEvent {
         buyer: tx_context::sender(ctx),
-        amount: price,
+        amount: total_price,
         item: type_name::get<T>(),
         timestamp: tx_context::epoch(ctx),
     });
